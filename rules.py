@@ -87,8 +87,8 @@ class Game(object):
         r = self._rnd.random()
         tile_value = None
         for (tile, freq) in Game.TILE_FREQ:
+            tile_value = tile
             if r < freq:
-                tile_value = tile
                 break;
             else:
                 r -= freq
