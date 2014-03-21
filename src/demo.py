@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 from rules import Game
+from strategy import RandomStrategy
 
 if __name__ == '__main__':
-    g = Game()
-    turn = 0
+    game = Game()
+    strategy = RandomStrategy()
     running = True
     while running:
-        turn_outcome = g.do_turn(Game.DIRECTIONS[turn % len(Game.DIRECTIONS)])
+        turn_outcome = game.do_turn(
+            strategy.get_move(game._board, game._score))
         running = (turn_outcome != Game.GAMEOVER)
-        turn += 1
-    print g._score
+    print game._score
