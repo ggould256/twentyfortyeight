@@ -25,16 +25,13 @@ def smash_up(board):
 
     Returns (score, board) -- the score of this move (the total value
     of all tiles created) and the new board resulting."""
-    print "start analysis"
     score = 0
     new_board = []
     for col in board:
-        print "analysing", col
         old_col = list(col)
         unzeroed = [v for v in old_col if v != 0]
         new_col = []
         while unzeroed:
-            print "iterating:", old_col, unzeroed, new_col
             if len(unzeroed) > 1 and unzeroed[0] == unzeroed[1]:
                 new_col.append(unzeroed[0] * 2)
                 score += unzeroed[0] * 2
@@ -44,7 +41,6 @@ def smash_up(board):
                 unzeroed = unzeroed[1:]
         new_col += [0] * (Game.HEIGHT - len(new_col))
         new_board.append(new_col)
-        print "done", new_col
     return (score, new_board)
 
 
@@ -71,11 +67,14 @@ class Game(object):
                 self._rnd.getstate() + ", " + self._score + ")")
 
     def prettyprint(self):
+        print "+-" + ("--" * Game.WIDTH) + "+"
         for y in range(Game.HEIGHT):
-            line = ""
+            line = "| "
             for x in range(Game.WIDTH):
                 line += Game.PRETTY_PRINT[self._board[x][y]] + " "
+            line += "|"
             print line
+        print "+-" + ("--" * Game.WIDTH) + "+"
 
     def add_tile(self):
         open_spaces = { (x, y)
