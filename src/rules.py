@@ -1,5 +1,6 @@
 """Rules for the game of 2048."""
 
+import copy
 import random
 
 
@@ -53,7 +54,12 @@ class Game(object):
                      16: 'A', 32: 'B', 64: 'C', 128: 'D',
                      256: 'E', 512: 'F', 1024: 'G',
                      2048: 'H', 4096: 'I', 8192: 'J' }
-    UP, LEFT, DOWN, RIGHT = range(4)
+
+    # Allowable moves
+    DIRECTIONS = UP, LEFT, DOWN, RIGHT = range(4)
+
+    # Turn outcomes
+    TURN_OUTCOMES = OK, ILLEGAL, GAMEOVER = range(3)
 
 
     def __init__(self, board=None, rnd=None, score=0):
@@ -61,6 +67,8 @@ class Game(object):
         self._board = [[0 for y in range(Game.HEIGHT)]
                        for x in range(Game.WIDTH)]
         self._score = score
+        for t in Game.STARTING_TILES:
+            self.add_tile(t)
 
     def __repr__(self):
         return ("Game(" + self._board + ", " +
@@ -76,7 +84,7 @@ class Game(object):
             print line
         print "+-" + ("--" * Game.WIDTH) + "+"
 
-    def add_tile(self):
+    def add_tile(self, tile_value=None):
         open_spaces = { (x, y)
                         for y in range(Game.HEIGHT)
                         for x in range(Game.WIDTH)
@@ -84,32 +92,39 @@ class Game(object):
         if not open_spaces:
             return False
         r = self._rnd.random()
-        tile_value = None
-        for (tile, freq) in Game.TILE_FREQ:
-            tile_value = tile
-            if r < freq:
-                break;
-            else:
-                r -= freq
+        if tile_value is None:
+            for (tile, freq) in Game.TILE_FREQ:
+                tile_value = tile
+                if r < freq:
+                    break;
+                else:
+                    r -= freq
         (new_x, new_y) = self._rnd.sample(open_spaces, 1)[0]
         self._board[new_x][new_y] = tile_value
         return True
 
     def smash(self, direction):
-        new_board = self._board
+        new_board = copy.deepcopy(self._board)
         for i in range(direction):
             new_board = rotate_cw(new_board)
         (turn_score, new_board) = smash_up(new_board)
+        if new_board == self._board:
+            return False  # Illegal move
         self._score += turn_score
         for i in range(direction):
             new_board = rotate_ccw(new_board)
         self._board = new_board
+        return True
 
     def do_turn(self, direction):
-        self.smash(direction)
-        if self.add_tile():
+        smashed = self.smash(direction)
+        if not smashed:
+            print "ILLEGAL MOVE"
+            return Game.ILLEGAL
+        added = self.add_tile()
+        if added:
             self.prettyprint()
-            return True
+            return Game.OK
         else:
             print "GAME OVER"
-            return False
+            return Game.GAMEOVER

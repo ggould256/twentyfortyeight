@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import rules
+from rules import Game
 
 if __name__ == '__main__':
-    g = rules.Game()
+    g = Game()
     turn = 0
     running = True
     while running:
-        running = g.do_turn(turn % 4)
+        turn_outcome = g.do_turn(Game.DIRECTIONS[turn % len(Game.DIRECTIONS)])
+        running = (turn_outcome != Game.GAMEOVER)
         turn += 1
     print g._score
