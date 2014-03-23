@@ -4,6 +4,7 @@ strategies."""
 import random
 from rules import Game
 
+
 class Strategy(object):
     """An abstract class for 2048 strategies.  Implementors will wish
     to override get_move().  A strategy will be instantiated once at
@@ -22,6 +23,7 @@ class Strategy(object):
         """Optionally, subclasses may choose to be notified of the
         outcome of the game.  This is your opportunity to gloat."""
         pass
+
 
 class RandomStrategy(Strategy):
     def __init__(self):

@@ -5,6 +5,7 @@ representing how good it is at 2048 without excessive computation."""
 
 from rules import Game
 
+
 class StrategyEvaluator(object):
     NUM_RUNS = 100
 
@@ -24,7 +25,7 @@ class StrategyEvaluator(object):
 
     def evaluate(self):
         total_score = 0
-        for i in range(StrategyEvaluator.NUM_RUNS):
+        for _ in range(StrategyEvaluator.NUM_RUNS):
             total_score += self.one_run()
         return total_score / StrategyEvaluator.NUM_RUNS
 
