@@ -40,10 +40,3 @@ class SpinnyStrategy(Strategy):
     def get_move(self, board, score):
         self._counter += 1
         return Game.DIRECTIONS[self._counter % len(Game.DIRECTIONS)]
-
-    def notify_outcome(self, board, score):
-        best_tile = max(max(column) for column in board)
-        if best_tile >= 2048:
-            print "Oh yeah, I rock, I got a", best_tile
-        else:
-            print "Oops, I only got", best_tile

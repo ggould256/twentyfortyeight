@@ -33,6 +33,8 @@ class StrategyEvaluator(object):
 if __name__ == '__main__':
     import strategy
     e1 = StrategyEvaluator(strategy.RandomStrategy)
-    print "RandomStrategy", e1.evaluate()
+    e1_score = e1.evaluate()
+    print "RandomStrategy", e1_score
     e2 = StrategyEvaluator(strategy.SpinnyStrategy)
-    print "SpinnyStrategy", e2.evaluate()
+    e2_score = e2.evaluate()
+    print "SpinnyStrategy", e2_score
