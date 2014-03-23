@@ -11,6 +11,9 @@ def list_zip(*lists):
 
 
 class Board(object):
+    """An immutable class representing an arrangement of tiles on the game
+    board.
+    """
     def __init__(self, cols_data=None):
         if cols_data is None:
             self._cols = [[0 for _ in range(Game.HEIGHT)]
@@ -82,6 +85,9 @@ class Board(object):
 
 
 class Game(object):
+    """A class representing a game in progress.  Also contains some public
+    static constants of use to other classes."""
+
     WIDTH = 4
     HEIGHT = 4
     STARTING_TILES = [2, 2]
