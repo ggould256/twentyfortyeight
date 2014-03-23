@@ -7,17 +7,20 @@ import random
 def list_zip(*args):
     return map(list, zip(*args))
 
+
 def rotate_cw(board):
     """Rotates a rectangular list of lists 'clockwise' (assuming
     board[x][y] is laid out in screen coordinates, ie with x
     increasing right and y increasing down)."""
     return list(reversed(list_zip(*board)))
 
+
 def rotate_ccw(board):
     """Rotates a rectangular list of lists 'counterclockwise'
     (assuming board[x][y] is laid out in screen coordinates, ie with x
     increasing right and y increasing down)."""
     return list(list_zip(*reversed(board)))
+
 
 def smash_up(board):
     """As when one presses the 'up'-arrow in the game: Shifts all
@@ -49,11 +52,11 @@ class Game(object):
     WIDTH = 4
     HEIGHT = 4
     STARTING_TILES = [2, 2]
-    TILE_FREQ = [ (2, 0.75), (4, 0.25) ]
-    PRETTY_PRINT = { 0: ' ', 2: '2', 4: '4', 8: '8',
-                     16: 'A', 32: 'B', 64: 'C', 128: 'D',
-                     256: 'E', 512: 'F', 1024: 'G',
-                     2048: 'H', 4096: 'I', 8192: 'J' }
+    TILE_FREQ = [(2, 0.75), (4, 0.25)]
+    PRETTY_PRINT = {0: ' ', 2: '2', 4: '4', 8: '8',
+                    16: 'A', 32: 'B', 64: 'C', 128: 'D',
+                    256: 'E', 512: 'F', 1024: 'G',
+                    2048: 'H', 4096: 'I', 8192: 'J'}
 
     # Allowable moves
     DIRECTIONS = UP, LEFT, DOWN, RIGHT = range(4)
@@ -61,11 +64,10 @@ class Game(object):
     # Turn outcomes
     TURN_OUTCOMES = OK, ILLEGAL, GAMEOVER = range(3)
 
-
     def __init__(self, board=None, rnd=None, score=0):
         self._rnd = rnd if rnd is not None else random.Random()
-        self._board = [[0 for y in range(Game.HEIGHT)]
-                       for x in range(Game.WIDTH)]
+        self._board = [[0 for _ in range(Game.HEIGHT)]
+                       for __ in range(Game.WIDTH)]
         self._score = score
         for t in Game.STARTING_TILES:
             self.add_tile(t)
@@ -73,6 +75,12 @@ class Game(object):
     def __repr__(self):
         return ("Game(" + self._board + ", " +
                 self._rnd.getstate() + ", " + self._score + ")")
+
+    def board(self):
+        return copy.deepcopy(self._board)
+
+    def score(self):
+        return self._score
 
     def prettyprint(self):
         print "+-" + ("--" * Game.WIDTH) + "+"
@@ -85,10 +93,10 @@ class Game(object):
         print "+-" + ("--" * Game.WIDTH) + "+"
 
     def add_tile(self, tile_value=None):
-        open_spaces = { (x, y)
+        open_spaces = {(x, y)
                         for y in range(Game.HEIGHT)
                         for x in range(Game.WIDTH)
-                        if not self._board[x][y] }
+                        if not self._board[x][y]}
         if not open_spaces:
             return False
         r = self._rnd.random()
@@ -96,7 +104,7 @@ class Game(object):
             for (tile, freq) in Game.TILE_FREQ:
                 tile_value = tile
                 if r < freq:
-                    break;
+                    break
                 else:
                     r -= freq
         (new_x, new_y) = self._rnd.sample(open_spaces, 1)[0]
@@ -105,13 +113,13 @@ class Game(object):
 
     def smash(self, direction):
         new_board = copy.deepcopy(self._board)
-        for i in range(direction):
+        for _ in range(direction):
             new_board = rotate_cw(new_board)
         (turn_score, new_board) = smash_up(new_board)
         if new_board == self._board:
             return False  # Illegal move
         self._score += turn_score
-        for i in range(direction):
+        for _ in range(direction):
             new_board = rotate_ccw(new_board)
         self._board = new_board
         return True
