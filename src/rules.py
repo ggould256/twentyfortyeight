@@ -46,6 +46,14 @@ class Board(object):
         new_cols[x][y] = new_tile
         return Board(new_cols)
 
+    def open_spaces(self):
+        """@returns a set of coordinates, each the location of an empty
+        space on the board."""
+        return {(x, y)
+                for y in range(Game.HEIGHT)
+                for x in range(Game.WIDTH)
+                if not self[(x, y)]}
+
     def rotate_cw(self):
         """Rotates a rectangular list of lists 'clockwise' (assuming
         board[x][y] is laid out in screen coordinates, ie with x
@@ -125,10 +133,7 @@ class Game(object):
         return self._score
 
     def add_tile(self, tile_value=None):
-        open_spaces = {(x, y)
-                        for y in range(Game.HEIGHT)
-                        for x in range(Game.WIDTH)
-                        if not self._board[(x, y)]}
+        open_spaces = self._board.open_spaces()
         if not open_spaces:
             return False
         r = self._rnd.random()
