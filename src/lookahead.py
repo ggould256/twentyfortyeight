@@ -21,7 +21,7 @@ def _sum_dicts(dicts):
         return {}
     else:
         left = dicts[0].copy()
-        right = _merge_dicts(dicts[1:])
+        right = _sum_dicts(dicts[1:])
         keys = set(left.iterkeys())
         keys |= set(right.iterkeys())
         result = {key: (left.get(key, 0) + right.get(key, 0))
