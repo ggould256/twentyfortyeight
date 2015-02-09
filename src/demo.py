@@ -10,6 +10,7 @@ if __name__ == '__main__':
     while running:
         turn_outcome = game.do_turn(
             strategy.get_move(game.board(), game.score()))
+        game.prettyprint()
         running = (turn_outcome != Game.GAMEOVER)
     strategy.notify_outcome(game.board(), game.score())
     print game.score()

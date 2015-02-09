@@ -6,7 +6,7 @@ from rules import Game
 
 
 class Strategy(object):
-    """An abstract class for 2048 strategies.  Implementors will wish
+    """An abstract class for 2048 strategies.  Implementers will wish
     to override at least get_move().  A strategy will be instantiated
     once at the beginning of each games, and disposed of once the game is
     complete."""

@@ -98,8 +98,8 @@ class Game(object):
 
     WIDTH = 4
     HEIGHT = 4
-    STARTING_TILES = [2, 2]
-    TILE_FREQ = [(2, 0.75), (4, 0.25)]
+    NUM_STARTING_TILES = 2
+    TILE_FREQ = [(2, 0.75), (4, 0.25)]  # distribution of new tile values
     PRETTY_PRINT = {0: ' ', 2: '2', 4: '4', 8: '8',
                     16: 'A', 32: 'B', 64: 'C', 128: 'D',
                     256: 'E', 512: 'F', 1024: 'G',
@@ -115,12 +115,12 @@ class Game(object):
         self._rnd = rnd if rnd is not None else random.Random()
         self._board = Board()
         self._score = score
-        for t in Game.STARTING_TILES:
-            self.add_tile(t)
+        for t in range(Game.NUM_STARTING_TILES):
+            self.add_tile(self.random_tile())
 
     def __repr__(self):
-        return ("Game(" + self._board + ", " +
-                self._rnd.getstate() + ", " + self._score + ")")
+        return ("Game(" + str(self._board) + ", " +
+                self._rnd.getstate() + ", " + str(self._score) + ")")
 
     def prettyprint(self):
         print self._score
@@ -132,18 +132,23 @@ class Game(object):
     def score(self):
         return self._score
 
+    def random_tile(self):
+        tile_value = 2
+        r = self._rnd.random()
+        for (tile, freq) in Game.TILE_FREQ:
+            tile_value = tile
+            if r < freq:
+                break
+            else:
+                r -= freq
+        return tile_value
+
     def add_tile(self, tile_value=None):
         open_spaces = self._board.open_spaces()
         if not open_spaces:
             return False
-        r = self._rnd.random()
         if tile_value is None:
-            for (tile, freq) in Game.TILE_FREQ:
-                tile_value = tile
-                if r < freq:
-                    break
-                else:
-                    r -= freq
+            tile_value = self.random_tile()
         (new_x, new_y) = self._rnd.sample(open_spaces, 1)[0]
         self._board = self._board.update((new_x, new_y), tile_value)
         return True
@@ -161,15 +166,15 @@ class Game(object):
         self._board = new_board
         return True
 
-    def do_turn(self, direction):
+    def do_turn(self, direction, verbose=False):
         smashed = self.smash(direction)
         if not smashed:
-            # print "ILLEGAL MOVE"  # Verbosity for debugging
+            if verbose: print "ILLEGAL MOVE"  # Verbosity for debugging
             return Game.ILLEGAL
         added = self.add_tile()
         if added:
-            # self.prettyprint()  # Verbosity for debugging
+            if verbose: self.prettyprint()  # Verbosity for debugging
             return Game.OK
         else:
-            # print "GAME OVER"  # Verbosity for debugging
+            if verbose: print "GAME OVER"  # Verbosity for debugging
             return Game.GAMEOVER

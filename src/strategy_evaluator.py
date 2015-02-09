@@ -13,6 +13,7 @@ class StrategyEvaluator(object):
         self._strategy = strategy
 
     def one_run(self):
+        # TODO divide score by runtime, or similar cost function.
         game = Game()
         running = True
         while running:
