@@ -8,7 +8,7 @@ from rules import Game
 class Strategy(object):
     """An abstract class for 2048 strategies.  Implementers will wish
     to override at least get_move().  A strategy will be instantiated
-    once at the beginning of each games, and disposed of once the game is
+    once at the beginning of each game, and disposed of once the game is
     complete."""
 
     def name(self):
@@ -19,7 +19,9 @@ class Strategy(object):
     def get_move(self, board, score):
         """
         Given the current state of the game, return the move chosen by
-        this strategy.  Subclasses must implement this method.
+        this strategy.  Illegal moves will be ignored.
+
+        Subclasses must implement this method.
         """
         raise NotImplementedError(
             "Strategy subclasses must implement get_move().")
