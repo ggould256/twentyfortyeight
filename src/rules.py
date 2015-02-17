@@ -153,18 +153,29 @@ class Game(object):
         self._board = self._board.update((new_x, new_y), tile_value)
         return True
 
-    def smash(self, direction):
+    def try_smash(self, direction):
         new_board = copy.deepcopy(self._board)
         for _ in range(direction):
             new_board = new_board.rotate_cw()
         (turn_score, new_board) = new_board.smash_up()
         if new_board == self._board:
-            return False  # Illegal move
+            return None  # Illegal move
         self._score += turn_score
         for _ in range(direction):
             new_board = new_board.rotate_ccw()
+        return new_board
+
+    def smash(self, direction):
+        new_board = self.try_smash(direction)
+        if new_board is None: return False
         self._board = new_board
         return True
+
+    def legal_moves(self):
+        # TODO ggould probably possible to optimize this.
+        for d in self.DIRECTIONS:
+            if self.try_smash(d) is not None:
+                yield d
 
     def do_turn(self, direction, verbose=False):
         smashed = self.smash(direction)

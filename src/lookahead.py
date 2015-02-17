@@ -3,7 +3,8 @@ future game states, as might be used to build and search a game tree.
 
 Throughout this file the term "distribution" is used.  A distribution is
 a dict (board state -> probability) describing a probability distribution
-of possible future boards.
+of possible future boards.  The probabilities in a distribution sum to 1,
+within floating point numerical error.
 """
 
 from rules import Game
@@ -20,8 +21,8 @@ def _sum_dicts(dicts):
     if not dicts:
         return {}
     else:
-        left = dicts[0].copy()
         right = _sum_dicts(dicts[1:])
+        left = dicts[0].copy()
         keys = set(left.iterkeys())
         keys |= set(right.iterkeys())
         result = {key: (left.get(key, 0) + right.get(key, 0))
@@ -34,8 +35,9 @@ class Lookahead(object):
         self._preimage = distribution
 
     def after_move(self, move):
-        return {board.apply_move(move): probability
-                for (board, probability) in self._preimage}
+        postimage = {board.apply_move(move): probability
+                     for (board, probability) in self._preimage}
+        return Lookahead(postimage)
 
     def after_placement(self):
         # This is kinda inefficient; rewrite with _sum_dicts/comprehension
@@ -46,8 +48,8 @@ class Lookahead(object):
                 open_spaces = board.open_spaces()
                 for loc in open_spaces:
                     new_board = board.update(loc, tile)
-                    postimage[new_board] = (
+                    postimage[new_board] = postimage.get(new_board, 0) + (
                         postimage.get(new_board, 0) +
                         (tile_probability * board_probability *
                          (1.0 / len(open_spaces))))
-        return postimage
+        return Lookahead(postimage)
