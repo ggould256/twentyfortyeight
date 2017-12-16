@@ -35,4 +35,4 @@ if __name__ == '__main__':
                   strategy.SpinnyStrategy()]:
         evaluator = StrategyEvaluator(strat)
         score = evaluator.evaluate()
-        print strat.name(), score
+        print(strat.name(), score)

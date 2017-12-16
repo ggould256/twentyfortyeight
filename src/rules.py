@@ -7,7 +7,7 @@ import random
 # Utility function
 def list_zip(*lists):
     """Zip some @p lists, returning the result as a list of lists."""
-    return map(list, zip(*lists))
+    return list(map(list, zip(*lists)))
 
 
 class Board(object):
@@ -28,14 +28,14 @@ class Board(object):
         return self._cols[x][y]
 
     def prettyprint(self):
-        print "+-" + ("--" * Game.WIDTH) + "+"
+        print("+-" + ("--" * Game.WIDTH) + "+")
         for y in range(Game.HEIGHT):
             line = "| "
             for x in range(Game.WIDTH):
                 line += Game.PRETTY_PRINT[self._cols[x][y]] + " "
             line += "|"
-            print line
-        print "+-" + ("--" * Game.WIDTH) + "+"
+            print(line)
+        print("+-" + ("--" * Game.WIDTH) + "+")
 
     def update(self, location, new_tile):
         """@return a new Board equal to this board everywhere except
@@ -115,7 +115,7 @@ class Game(object):
                 self._rnd.getstate() + ", " + self._score + ")")
 
     def prettyprint(self):
-        print self._score
+        print(self._score)
         self._board.prettyprint()
 
     def board(self):

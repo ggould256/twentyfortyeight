@@ -12,4 +12,4 @@ if __name__ == '__main__':
             strategy.get_move(game.board(), game.score()))
         running = (turn_outcome != Game.GAMEOVER)
     strategy.notify_outcome(game.board(), game.score())
-    print game.score()
+    print(game.score())
