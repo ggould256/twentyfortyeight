@@ -37,6 +37,22 @@ class Board(object):
             print(line)
         print("+-" + ("--" * Game.WIDTH) + "+")
 
+    def column(self, x):
+        """Returns the xth column."""
+        return list(self._cols[x])
+
+    def row(self, y):
+        """Returns the yth row."""
+        return (self._cols[x][y] for x in range(Game.WIDTH))
+
+    def columns(self):
+        """Returns the columns."""
+        return (self.column(i) for i in range(Game.WIDTH))
+
+    def rows(self):
+        """Returns the rows."""
+        return (self.row(i) for i in range(Game.HEIGHT))
+
     def update(self, location, new_tile):
         """@return a new Board equal to this board everywhere except
         at @p location, where @new_tile has replaced the prior value."""
@@ -58,30 +74,59 @@ class Board(object):
         increasing right and y increasing down)."""
         return Board(list(list_zip(*reversed(self._cols))))
 
+    def can_smash_up(self, column):
+        changed, _, _ = self.smash_col_up(column)
+
+    def smash_col_up(self, column):
+        """Smashes a single column upward.  Returns (changed?, score, column)
+        with the score incurred by the move and the new value of the
+        column."""
+        score = 0
+        old_col = list(column)
+        unzeroed = [v for v in old_col if v != 0]
+        new_col = []
+        while unzeroed:
+            if len(unzeroed) > 1 and unzeroed[0] == unzeroed[1]:
+                new_col.append(unzeroed[0] * 2)
+                score += unzeroed[0] * 2
+                unzeroed = unzeroed[2:]
+            else:
+                new_col.append(unzeroed[0])
+                unzeroed = unzeroed[1:]
+        new_col += [0] * (Game.HEIGHT - len(new_col))
+        return (new_col != column, score, new_col)
+
     def smash_up(self):
         """As when one presses the 'up'-arrow in the game: Shifts all
         columns upward to the extent possible by combining pairs of
         like tiles.  Assumes a self in screen coordinate style.
 
-        Returns (score, new_cols) -- the score of this move (the total value
-        of all tiles created) and the new board resulting."""
+        Returns (changed, score, new_cols) -- whether the smash changed
+        anything, the score of this move (the total value of all tiles
+        created) and the new board resulting."""
         score = 0
         new_cols = []
+        changed = False
         for col in self._cols:
-            old_col = list(col)
-            unzeroed = [v for v in old_col if v != 0]
-            new_col = []
-            while unzeroed:
-                if len(unzeroed) > 1 and unzeroed[0] == unzeroed[1]:
-                    new_col.append(unzeroed[0] * 2)
-                    score += unzeroed[0] * 2
-                    unzeroed = unzeroed[2:]
-                else:
-                    new_col.append(unzeroed[0])
-                    unzeroed = unzeroed[1:]
-            new_col += [0] * (Game.HEIGHT - len(new_col))
+            col_changed, col_score, new_col = self.smash_col_up(col)
+            changed |= col_changed
+            score += col_score
             new_cols.append(new_col)
-        return (score, Board(new_cols))
+        return (changed, score, Board(new_cols))
+
+    def can_move(self):
+        """Return True if there are any moves on this board."""
+        if any(cell == 0 for column in self._cols for cell in column):
+            return True
+        for col in self.columns():
+            col = list(col)
+            for i in range(Game.HEIGHT - 1):
+                if col[i] == col[i + 1]: return True
+        for row in self.rows():
+            row = list(row)
+            for i in range(Game.WIDTH - 1):
+                if row[i] == row[i + 1]: return True
+        return False
 
 
 class Game(object):
@@ -126,9 +171,9 @@ class Game(object):
 
     def add_tile(self, tile_value=None):
         open_spaces = {(x, y)
-                        for y in range(Game.HEIGHT)
-                        for x in range(Game.WIDTH)
-                        if not self._board[(x, y)]}
+                       for y in range(Game.HEIGHT)
+                       for x in range(Game.WIDTH)
+                       if not self._board[(x, y)]}
         if not open_spaces:
             return False
         r = self._rnd.random()
@@ -143,18 +188,27 @@ class Game(object):
         self._board = self._board.update((new_x, new_y), tile_value)
         return True
 
-    def smash(self, direction):
+    def smash_without_counterrotate(self, direction):
+        """Smashes in the given direction, leaving the board rotated
+        with direction pointed up.  Returns True iff the smash actually
+        changed anything other than the rotation."""
         new_board = copy.deepcopy(self._board)
         for _ in range(direction):
             new_board = new_board.rotate_cw()
-        (turn_score, new_board) = new_board.smash_up()
-        if new_board == self._board:
+        (changed, turn_score, new_board) = new_board.smash_up()
+        if not changed:
             return False  # Illegal move
         self._score += turn_score
+        self._board = new_board
+        return True
+
+    def smash(self, direction):
+        changed = self.smash_without_counterrotate(direction)
+        new_board = self._board
         for _ in range(direction):
             new_board = new_board.rotate_ccw()
         self._board = new_board
-        return True
+        return changed
 
     def do_turn(self, direction):
         smashed = self.smash(direction)
@@ -164,7 +218,10 @@ class Game(object):
         added = self.add_tile()
         if added:
             # self.prettyprint()  # Verbosity for debugging
-            return Game.OK
+            if self._board.can_move():
+                return Game.OK
+            else:
+                return Game.GAMEOVER
         else:
             # print "GAME OVER"  # Verbosity for debugging
             return Game.GAMEOVER
