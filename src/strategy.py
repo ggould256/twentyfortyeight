@@ -31,8 +31,8 @@ class Strategy(object):
 
 
 class RandomStrategy(Strategy):
-    def __init__(self):
-        self._rnd = random.Random()
+    def __init__(self, rnd=None):
+        self._rnd = rnd if rnd is not None else random.Random()
 
     def get_move(self, board, score):
         return self._rnd.choice(Game.DIRECTIONS)

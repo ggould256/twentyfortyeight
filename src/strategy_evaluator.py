@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """A mechanism for evaluating a strategy and giving it an abstract "score"
 representing how good it is at 2048 without excessive computation."""

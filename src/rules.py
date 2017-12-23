@@ -53,6 +53,9 @@ class Board(object):
         """Returns the rows."""
         return (self.row(i) for i in range(Game.HEIGHT))
 
+    def copy(self):
+        return Board(copy.deepcopy(self._cols))
+
     def update(self, location, new_tile):
         """@return a new Board equal to this board everywhere except
         at @p location, where @new_tile has replaced the prior value."""
@@ -203,6 +206,7 @@ class Game(object):
         return True
 
     def smash(self, direction):
+        """Performs, end-to-end, the smash phase of the turn."""
         changed = self.smash_without_counterrotate(direction)
         new_board = self._board
         for _ in range(direction):
@@ -211,17 +215,29 @@ class Game(object):
         return changed
 
     def do_turn(self, direction):
+        """Perform a "smash" in the indicated direction, add a random tile,
+        and return the result."""
+        result, _ = self.do_turn_and_retrieve_intermediate(direction)
+        return result
+
+    def do_turn_and_retrieve_intermediate(self, direction):
+        """Just like do_turn but also returns the state of the board before
+        the tile add step (as this is typically what will be wanted for a
+        machine learning Q function."""
         smashed = self.smash(direction)
         if not smashed:
             # print "ILLEGAL MOVE"  # Verbosity for debugging
-            return Game.ILLEGAL
+            return None, Game.ILLEGAL
+        intermediate_board = self._board
         added = self.add_tile()
         if added:
             # self.prettyprint()  # Verbosity for debugging
             if self._board.can_move():
-                return Game.OK
+                return intermediate_board, Game.OK
             else:
-                return Game.GAMEOVER
+                return intermediate_board, Game.GAMEOVER
         else:
+            # This branch can't happen if Board.can_move() is implemented
+            # correctly.
             # print "GAME OVER"  # Verbosity for debugging
-            return Game.GAMEOVER
+            return intermediate_board, Game.GAMEOVER
