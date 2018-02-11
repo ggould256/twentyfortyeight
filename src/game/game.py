@@ -16,7 +16,7 @@ class Game(object):
         self._board = board or Board()
         self._score = score
         for t in STARTING_TILES:
-            self.add_tile(t)
+            self._add_tile(t)
 
     def __repr__(self):
         return ("Game(%s, %s, %s)" %
@@ -32,7 +32,7 @@ class Game(object):
     def score(self):
         return self._score
 
-    def add_tile(self, tile_value=None):
+    def _add_tile(self, tile_value=None):
         open_spaces = {(x, y)
                        for y in range(HEIGHT)
                        for x in range(WIDTH)
@@ -51,7 +51,12 @@ class Game(object):
         self._board = self._board.update((new_x, new_y), tile_value)
         return True
 
-    def smash_without_counterrotate(self, direction):
+    # This method is broken out because in principle it might be used to
+    # run large number of games at high performance:  Because all rotations
+    # are equally valuable game states, the only reason to do the
+    # counterrotate is to present a consistent state for a human or other
+    # stateful user.
+    def _smash_without_counterrotate(self, direction):
         """Smashes in the given direction, leaving the board rotated
         with direction pointed up.  Returns True iff the smash actually
         changed anything other than the rotation."""
@@ -67,7 +72,7 @@ class Game(object):
 
     def smash(self, direction):
         """Performs, end-to-end, the smash phase of the turn."""
-        changed = self.smash_without_counterrotate(direction)
+        changed = self._smash_without_counterrotate(direction)
         new_board = self._board
         for _ in range(direction):
             new_board = new_board.rotate_ccw()
@@ -89,7 +94,7 @@ class Game(object):
             # print "ILLEGAL MOVE"  # Verbosity for debugging
             return None, ILLEGAL
         intermediate_board = self._board
-        added = self.add_tile()
+        added = self._add_tile()
         if added:
             # self.pretty_print()  # Verbosity for debugging
             if self._board.can_move():
