@@ -13,7 +13,7 @@ from game.game import Game
 from strategy.basic import RandomStrategy
 
 ENCODING_WIDTH = 16
-MAX_BATCH_SIZE = 1024  # numpy arrays get slow to update beyond this size.
+MAX_BATCH_SIZE = 4096  # numpy arrays get slow to update beyond this size.
 EXAMPLE_WIDTH = ENCODING_WIDTH * WIDTH * HEIGHT
 
 
@@ -33,7 +33,7 @@ class Dataset(object):
         """Creates a new empty dataset."""
         self._num_examples = 0
         self._example_batches = [np.zeros((0, EXAMPLE_WIDTH))]
-        self._scores = np.zeros((0, 1))
+        self._score_batches = [np.zeros((0, 1))]
 
     ONEHOT_ENCODING = {0: onehot(0), 2: onehot(1), 4: onehot(2),
                        8: onehot(3), 16: onehot(4), 32: onehot(5),
@@ -78,9 +78,10 @@ class Dataset(object):
         batch_size_so_far = self._example_batches[-1].shape[0]
         if len(states) + batch_size_so_far > MAX_BATCH_SIZE:
             self._example_batches.append(np.zeros((0, EXAMPLE_WIDTH)))
+            self._score_batches.append(np.zeros((0, 1)))
         self._example_batches[-1] = \
             np.append(self._example_batches[-1], states, axis=0)
-        self._scores = np.append(self._scores, scores)
+        self._score_batches[-1] = np.append(self._score_batches[-1], scores)
         return len(states)
 
     @staticmethod
@@ -104,10 +105,13 @@ class Dataset(object):
                   (num_added, added))
         return added
 
+    def num_batches(self):
+        return len(self._example_batches)
+
     def num_examples(self):
         return self._num_examples
 
-    def batches(self):
+    def example_batches(self):
         return self._example_batches
 
     def nth_example(self, n):
@@ -120,8 +124,18 @@ class Dataset(object):
                 counter -= size
         return None
 
-    def scores(self):
-        return self._scores
+    def nth_score(self, n):
+        counter = n
+        for batch in self._score_batches:
+            size = batch.shape[0]
+            if counter < size:
+                return batch[counter]
+            else:
+                counter -= size
+        return None
+
+    def score_batches(self):
+        return self._score_batches
 
 
 def test_with_random():
@@ -130,14 +144,18 @@ def test_with_random():
     dataset = Dataset()
     num_added = dataset.add_n_examples(strategy, random, 1e5)
     print("Added", num_added, "examples")
-    print("Shapes:  X is", [batch.shape for batch in dataset.batches()],
-          "Y is", dataset.scores().shape)
+    for index in range(dataset.num_batches()):
+        print("X shape is %s, Y shape is %s" %
+              (dataset.example_batches()[index].shape,
+               dataset.score_batches()[index].shape))
     print("Representative line ", dataset.nth_example(10))
-    print("Has score ", dataset.scores()[10])
+    print("Has score ", dataset.nth_score(10))
     print("Representative line ", dataset.nth_example(100))
-    print("Has score ", dataset.scores()[100])
+    print("Has score ", dataset.nth_score(100))
     print("Representative line ", dataset.nth_example(1000))
-    print("Has score ", dataset.scores()[1000])
+    print("Has score ", dataset.nth_score(1000))
+    print("Representative line ", dataset.nth_example(10000))
+    print("Has score ", dataset.nth_score(10000))
 
 
 if __name__ == '__main__':
