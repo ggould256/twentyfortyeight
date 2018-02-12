@@ -2,8 +2,7 @@
 
 """Classes and functions related to dataset generation for learning Q
 functions.  Datasets in this sense are mappings from board positions
-(represented as long onehot-encoded arrays in the conventional fashion) to
-score values.
+(represented as flattened arrays of tile numbers) to score values.
 """
 
 import numpy as np
@@ -12,17 +11,9 @@ from game.common import *
 from game.game import Game
 from strategy.basic import RandomStrategy
 
-ENCODING_WIDTH = 16
+ENCODING_WIDTH = 1
 MAX_BATCH_SIZE = 4096  # numpy arrays get slow to update beyond this size.
 EXAMPLE_WIDTH = ENCODING_WIDTH * WIDTH * HEIGHT
-
-
-def onehot(i, n=ENCODING_WIDTH):
-    """Returns a vector of @p n elements, all zero except for the
-    @p i th element, which will be 1."""
-    result = np.zeros((1, n))
-    result[0, i] = 1
-    return result
 
 
 class Dataset(object):
@@ -35,18 +26,15 @@ class Dataset(object):
         self._example_batches = [np.zeros((0, EXAMPLE_WIDTH))]
         self._score_batches = [np.zeros((0, 1))]
 
-    ONEHOT_ENCODING = {0: onehot(0), 2: onehot(1), 4: onehot(2),
-                       8: onehot(3), 16: onehot(4), 32: onehot(5),
-                       64: onehot(6), 128: onehot(7), 256: onehot(8),
-                       512: onehot(9), 1024: onehot(10), 2048: onehot(11),
-                       4096: onehot(12), 8192: onehot(13)}
+    ENCODING = {**{0: np.array([[0]])},
+                **{2**n: np.array([[n]]) for n in range(1, 15)}}
 
     def board_as_vector(self, board):
         """@return the contents of the given board as a row vector."""
         result = np.zeros((1, 0))
         for column in board.columns():
             for cell in column:
-                result = np.append(result, self.ONEHOT_ENCODING[cell], axis=1)
+                result = np.append(result, self.ENCODING[cell], axis=1)
         assert(result.shape == (1, EXAMPLE_WIDTH))
         return result
 
