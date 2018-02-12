@@ -88,9 +88,9 @@ class Dataset(object):
         added = 0
         while added < n:
             num_added = self.add_game(strategy, rnd)
+            if (added // 10000) != ((num_added + added) // 10000):
+                print("Added %d so far..." % (num_added + added))
             added += num_added
-            print("Added a game of %d moves; %d moves in dataset addition." %
-                  (num_added, added))
         return added
 
     def num_batches(self):
@@ -125,25 +125,51 @@ class Dataset(object):
     def score_batches(self):
         return self._score_batches
 
+    def collapse(self):
+        """Collapses all of the batches down to a single, very large batch."""
+        self._score_batches = [np.concatenate(self._score_batches)]
+        self._example_batches = [np.concatenate(self._example_batches)]
+
+    def save(self, filename):
+        assert(filename.endswith(".npz"))
+        num_batches = len(self._example_batches)
+        examples_dict = {"examples_%s" % i: self._example_batches[i]
+                         for i in range(num_batches)}
+        scores_dict = {"scores_%s" % i: self._score_batches[i]
+                       for i in range(num_batches)}
+        with open(filename, "wb") as f:
+            np.savez(f, **examples_dict, **scores_dict)
+
+    @staticmethod
+    def load(filename):
+        assert(filename.endswith(".npz"))
+        with open(filename, "rb") as f:
+            npz_data = np.load(f)
+            data = Dataset()
+            num_batches = len(npz_data.files) // 2
+            for i in range(num_batches):
+                data._example_batches.append(
+                    npz_data["examples_%s" % i])
+                data._score_batches.append(
+                    npz_data["scores_%s" % i])
+            data._num_examples = sum(array.shape[0]
+                                     for array in data._example_batches)
+            return data
+
 
 def test_with_random():
     import random
     strategy = RandomStrategy()
     dataset = Dataset()
-    num_added = dataset.add_n_examples(strategy, random, 1e5)
+    num_added = dataset.add_n_examples(strategy, random, 5e7)
     print("Added", num_added, "examples")
     for index in range(dataset.num_batches()):
         print("X shape is %s, Y shape is %s" %
               (dataset.example_batches()[index].shape,
                dataset.score_batches()[index].shape))
-    print("Representative line ", dataset.nth_example(10))
-    print("Has score ", dataset.nth_score(10))
-    print("Representative line ", dataset.nth_example(100))
-    print("Has score ", dataset.nth_score(100))
-    print("Representative line ", dataset.nth_example(1000))
-    print("Has score ", dataset.nth_score(1000))
-    print("Representative line ", dataset.nth_example(10000))
-    print("Has score ", dataset.nth_score(10000))
+    print("saving...")
+    dataset.save("random_strategy_dataset.npz")
+    print("...saved.")
 
 
 if __name__ == '__main__':
