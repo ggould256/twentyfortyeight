@@ -13,10 +13,13 @@ class Game(object):
 
     def __init__(self, board=None, rnd=None, score=0):
         self._rnd = rnd if rnd is not None else random.Random()
-        self._board = board or Board()
         self._score = score
-        for t in STARTING_TILES:
-            self._add_tile(t)
+        if board is None:
+            self._board = Board()
+            for t in STARTING_TILES:
+                self._add_tile(t)
+        else:
+            self._board = board
 
     def __repr__(self):
         return ("Game(%s, %s, %s)" %
