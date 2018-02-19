@@ -5,6 +5,9 @@ functions.  Datasets in this sense are mappings from board positions
 (represented as flattened arrays of tile numbers) to score values.
 """
 
+import argparse
+import sys
+
 import numpy as np
 
 from game.common import *
@@ -14,10 +17,11 @@ from strategy.basic import RandomStrategy
 ENCODING_WIDTH = 1
 MAX_BATCH_SIZE = 4096  # numpy arrays get slow to update beyond this size.
 EXAMPLE_WIDTH = ENCODING_WIDTH * WIDTH * HEIGHT
+MAX_TILE = 15
 
 
 class Dataset(object):
-    """A set of training data, held as matrices whose rows are examples and a
+    """A set of training data (held as matrices whose rows are examples) and a
     column vector of the example scores.."""
 
     def __init__(self):
@@ -27,7 +31,7 @@ class Dataset(object):
         self._score_batches = [np.zeros((0, 1))]
 
     ENCODING = {**{0: np.array([[0]])},
-                **{2**n: np.array([[n]]) for n in range(1, 15)}}
+                **{2**n: np.array([[n]]) for n in range(1, MAX_TILE)}}
 
     def board_as_vector(self, board):
         """@return the contents of the given board as a row vector."""
@@ -137,8 +141,9 @@ class Dataset(object):
                          for i in range(num_batches)}
         scores_dict = {"scores_%s" % i: self._score_batches[i]
                        for i in range(num_batches)}
+        unified_dict = {**examples_dict, **scores_dict}
         with open(filename, "wb") as f:
-            np.savez(f, **examples_dict, **scores_dict)
+            np.savez(f, **unified_dict)
 
     @staticmethod
     def load(filename):
@@ -146,6 +151,8 @@ class Dataset(object):
         with open(filename, "rb") as f:
             npz_data = np.load(f)
             data = Dataset()
+            data._example_batches = []
+            data._score_batches = []
             num_batches = len(npz_data.files) // 2
             for i in range(num_batches):
                 data._example_batches.append(
@@ -157,20 +164,34 @@ class Dataset(object):
             return data
 
 
-def test_with_random():
+def main(argv):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_examples', metavar='N', type=int,
+                        help="Number of examples (at minimum) to generate")
+    parser.add_argument('--output_file', metavar='FILENAME', type=str,
+                        help="npz file into which to write example data")
+    args = parser.parse_args(argv[1:])
+
     import random
     strategy = RandomStrategy()
     dataset = Dataset()
-    num_added = dataset.add_n_examples(strategy, random, 5e7)
+    num_added = dataset.add_n_examples(strategy, random, args.num_examples)
     print("Added", num_added, "examples")
     for index in range(dataset.num_batches()):
         print("X shape is %s, Y shape is %s" %
               (dataset.example_batches()[index].shape,
                dataset.score_batches()[index].shape))
     print("saving...")
-    dataset.save("random_strategy_dataset.npz")
+    dataset.save(args.output_file)
     print("...saved.")
+    print("checking output file validity...")
+    check_data = Dataset.load(args.output_file)
+    assert dataset.num_batches() == check_data.num_batches(), \
+        ("original batch number %s does not equal output batch number %s"
+         % (dataset.num_batches(), check_data.num_batches()))
+    check_data.collapse()
+    print("...output is valid.")
 
 
 if __name__ == '__main__':
-    test_with_random()
+    main(sys.argv)
