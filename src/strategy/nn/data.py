@@ -22,6 +22,16 @@ ENCODING = {**{0: np.array([[0]])},
             **{2 ** n: np.array([[n]]) for n in range(1, MAX_TILE)}}
 
 
+def board_as_vector(board):
+    """@return the contents of the given board as a row vector."""
+    result = np.zeros((1, 0))
+    for column in board.columns():
+        for cell in column:
+            result = np.append(result, ENCODING[cell], axis=1)
+    assert (result.shape == (1, EXAMPLE_WIDTH))
+    return result
+
+
 class Dataset(object):
     """A set of training data (held as matrices whose rows are examples) and a
     column vector of the example scores.."""
@@ -31,15 +41,6 @@ class Dataset(object):
         self._num_examples = 0
         self._example_batches = [np.zeros((0, EXAMPLE_WIDTH))]
         self._score_batches = [np.zeros((0, 1))]
-
-    def board_as_vector(self, board):
-        """@return the contents of the given board as a row vector."""
-        result = np.zeros((1, 0))
-        for column in board.columns():
-            for cell in column:
-                result = np.append(result, ENCODING[cell], axis=1)
-        assert(result.shape == (1, EXAMPLE_WIDTH))
-        return result
 
     def add_game(self, player_strategy, rnd):
         """Runs a game with the given strategy and randomness source, then
@@ -59,7 +60,7 @@ class Dataset(object):
             num_moves += (turn_outcome != ILLEGAL)
             if turn_outcome == OK:
                 states = np.append(states,
-                                   self.board_as_vector(intermediate_board),
+                                   board_as_vector(intermediate_board),
                                    axis=0)
                 self._num_examples += 1
         player_strategy.notify_outcome(game.board(), game.score())
