@@ -16,6 +16,8 @@ if __name__ == '__main__':
                         help="npz file into which to write example data")
     parser.add_argument('--verbose', action="store_true",
                         help="display game state at each move")
+    parser.add_argument('--summary', action="store_true",
+                        help="Show score summary instead of score per game.")
     parser.add_argument('--number_of_games', type=int, default=1,
                         help="number of games to run")
     args = parser.parse_args()
@@ -29,6 +31,7 @@ if __name__ == '__main__':
         from strategy.nn.nn_strategy import ModelStrategy
         strategy = ModelStrategy(args.strategy)
 
+    total = 0
     for i in range(args.number_of_games):
         game = Game()
         running = True
@@ -39,4 +42,10 @@ if __name__ == '__main__':
                 game.pretty_print()
             running = (turn_outcome != GAMEOVER)
         strategy.notify_outcome(game.board(), game.score())
-        print(game.score())
+        if not args.summary:
+            print(game.score())
+        total += game.score()
+    if args.summary:
+        print("Strategy %s had average score %f after %d games" %
+              (args.strategy,
+               (total / args.number_of_games), args.number_of_games))

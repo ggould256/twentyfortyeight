@@ -12,7 +12,6 @@ import numpy as np
 
 from game.common import *
 from game.game import Game
-from strategy.basic import RandomStrategy
 
 ENCODING_WIDTH = 1
 MAX_BATCH_SIZE = 4096  # numpy arrays get slow to update beyond this size.
@@ -89,6 +88,7 @@ class Dataset(object):
     def add_n_examples(self, strategy, rnd, n):
         """Runs games and adds them to the dataset until at least @p n
         examples have been added.  Returns the number of examples added."""
+        print("Adding", n, "examples to dataset.")
         added = 0
         while added < n:
             num_added = self.add_game(strategy, rnd)
@@ -170,10 +170,22 @@ def main(argv):
                         help="Number of examples (at minimum) to generate")
     parser.add_argument('--output_file', metavar='FILENAME', type=str,
                         help="npz file into which to write example data")
+    parser.add_argument('--strategy', metavar='FILE_OR_NAME', type=str,
+                        help="name of strategy or filename of model",
+                        default="random")
     args = parser.parse_args(argv[1:])
 
     import random
-    strategy = RandomStrategy()
+    from strategy.basic import RandomStrategy, SpinnyStrategy
+    from strategy.nn.nn_strategy import ModelStrategy
+
+    if args.strategy == "spinny":
+        strategy = SpinnyStrategy()
+    elif args.strategy == "random":
+        strategy = RandomStrategy()
+    else:
+        strategy = ModelStrategy(args.strategy)
+
     dataset = Dataset()
     num_added = dataset.add_n_examples(strategy, random, args.num_examples)
     print("Added", num_added, "examples")

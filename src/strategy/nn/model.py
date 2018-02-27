@@ -12,7 +12,6 @@ from strategy.nn.data import Dataset, EXAMPLE_WIDTH, MAX_TILE
 
 HPARAMS = {"conv_channels": 30,
            "dense_sizes": [100, 50, 25],
-           "training_epochs": 4
            }
 
 # Note:  Throughout, 'x' refers to the complete set of training data, 'y'
@@ -89,11 +88,11 @@ def get_training_data(filename):
     return x_as_tiles, x_as_onehot, y
 
 
-def train_model(model, x, y, model_filename):
+def train_model(model, x, y, model_filename, num_epochs):
     model.compile(loss='mean_squared_error',
                   optimizer='Adam',
                   metrics=['mae'])
-    model.fit(x, y, epochs=HPARAMS['training_epochs'], verbose=1)
+    model.fit(x, y, epochs=num_epochs, verbose=1)
     model.save(model_filename)
 
 
@@ -122,6 +121,8 @@ def main(argv):
                         help='npz file containing training data')
     parser.add_argument('--model_file', metavar='FILENAME', type=str,
                         help='keras model file to read in or output into')
+    parser.add_argument('--epochs', type=int, help="number of training epochs",
+                        default=5)
     args = parser.parse_args(argv[1:])
 
     x, x_as_onehot, y = get_training_data(args.training_data)
@@ -131,7 +132,7 @@ def main(argv):
     else:
         print("Training new model into", args.model_file)
         model = make_model()
-        train_model(model, x_as_onehot, y, args.model_file)
+        train_model(model, x_as_onehot, y, args.model_file, args.epochs)
     for i in range(5):
         show_exemplar(model, x, x_as_onehot, y)
 
