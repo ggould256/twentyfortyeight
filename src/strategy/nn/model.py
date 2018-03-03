@@ -5,8 +5,9 @@ import sys
 import keras as k
 import numpy as np
 
+from game.board import Board, MAX_TILE
 from game.common import *
-from strategy.nn.data import Dataset, EXAMPLE_WIDTH, MAX_TILE, vector_as_board
+from strategy.nn.data import Dataset, EXAMPLE_WIDTH
 
 
 HPARAMS = {"conv_channels": 30,
@@ -105,7 +106,7 @@ def show_exemplar(model, x, x_as_onehot, y):
                                            (1, WIDTH * HEIGHT, MAX_TILE))
     prediction = model.predict(example_as_single_example)
 
-    board = vector_as_board(example)
+    board = Board.from_vector(example)
     board.pretty_print()
     print("Actual score: %d; predicted score: %s" % (score, prediction))
 

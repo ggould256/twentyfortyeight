@@ -21,7 +21,6 @@ url = "https://pypi.python.org/simple"
 [packages]
 
 tensorflow = "*"
-tensorflow-gpu = "*"
 numpy = "*"
-keras = "*"
+Keras = "*"
 "h5py" = "*"

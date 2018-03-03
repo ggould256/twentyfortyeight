@@ -1,8 +1,8 @@
 import keras as k
 import numpy as np
 
+from game.board import MAX_TILE
 from game.common import *
-from strategy.nn.data import MAX_TILE, board_as_vector
 from strategy.strategy import Strategy
 
 
@@ -15,14 +15,13 @@ class ModelStrategy(Strategy):
         self._verbosity = verbose_period or float("inf")
         self._count = 0
 
-
     def _direction_prediction(self, board, direction):
         for _ in range(direction):
             board = board.rotate_cw()
         changed, _, board = board.smash_up()
         if not changed:
             return float('-inf')  # illegal move
-        as_vector = board_as_vector(board)
+        as_vector = board.as_vector()
         as_onehot = k.utils.to_categorical(as_vector, MAX_TILE)
         example_as_single_example = np.reshape(as_onehot,
                                                (1, WIDTH * HEIGHT, MAX_TILE))
