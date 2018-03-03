@@ -56,21 +56,24 @@ $PHONY: generation_1_demo
 # random.  What?  Overfitting -- the training data will never explore any
 # non-optimal paths, and so the strategy won't know that they are bad.
 #
-# There are two obvious approaches to avoid this:
+# We use two obvious approaches to avoid this:
 #  * Start training data generation from positions from the random set.
-#  * TODO(ggould) Transfer learning.  Gen-1 knew bad from good; learn from it.
+#  * Transfer learning.  Gen-1 knew bad from good; learn from it.
 
 # Examples are more expensive to generate, so use fewer examples and more
 # training epochs in this generation.
 generation_1.npz: generation_1.hdf5 generation_0.npz
 	$(PY) strategy.nn.data --strategy $<         \
-	                       --num_examples 100000 \
+	                       --num_examples 200000 \
 	                       --output_file $@      \
 	                       --starting_positions $(word 2,$^) \
-	                       --new_start_fraction 0.5
+	                       --new_start_fraction 0.75
 
-generation_2.hdf5: generation_1.npz
-	$(PY) strategy.nn.model --training_data $< --epochs 20 --model_file $@
+generation_2.hdf5: generation_1.npz generation_1.hdf5
+	$(PY) strategy.nn.model --training_data $<   \
+	                        --transfer_from $(word 2,$^) \
+	                        --epochs 50          \
+	                        --model_file $@
 
 generation_2_demo: generation_2.hdf5
 	# Evaluate on a new test set.

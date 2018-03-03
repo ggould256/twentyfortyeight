@@ -115,6 +115,9 @@ def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('--training_data', metavar='FILENAME', type=str,
                         help='npz file containing training data')
+    parser.add_argument('--transfer_from', metavar='FILENAME', type=str,
+                        help=('if set, load the named model rather than'
+                              'starting a new one'))
     parser.add_argument('--model_file', metavar='FILENAME', type=str,
                         help='keras model file to read in or output into')
     parser.add_argument('--epochs', type=int, help="number of training epochs",
@@ -122,13 +125,14 @@ def main(argv):
     args = parser.parse_args(argv[1:])
 
     x, x_as_onehot, y = get_training_data(args.training_data)
-    if os.path.isfile(args.model_file):
-        print("Loading existing model from", args.model_file)
-        model = k.models.load_model(args.model_file)
+    load_file = args.transfer_from or args.model_file
+    if os.path.isfile(load_file):
+        print("Loading existing model from", load_file)
+        model = k.models.load_model(load_file)
     else:
         print("Training new model into", args.model_file)
         model = make_model()
-        train_model(model, x_as_onehot, y, args.model_file, args.epochs)
+    train_model(model, x_as_onehot, y, args.model_file, args.epochs)
     for i in range(5):
         show_exemplar(model, x, x_as_onehot, y)
 
