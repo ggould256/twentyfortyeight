@@ -18,6 +18,7 @@ PRETTY_PRINT = {0: ' ', 2: '2', 4: '4', 8: '8',
 
 # Allowable moves
 DIRECTIONS = UP, LEFT, DOWN, RIGHT = range(4)
+PRETTY_DIRECTION = ["UP", "LEFT", "DOWN", "RIGHT"]
 
 # Turn outcomes
 TURN_OUTCOMES = OK, ILLEGAL, GAMEOVER = range(3)

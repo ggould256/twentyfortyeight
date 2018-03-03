@@ -7,8 +7,14 @@ from strategy.strategy import Strategy
 
 
 class ModelStrategy(Strategy):
-    def __init__(self, model_filename):
+    def __init__(self, model_filename, verbose_period=None):
+        """Create a ModelStrategy reading the neural network from the given
+        @p model_filename hdf5 file.  For debugging, output the board state
+        every @p verbose_period moves (leave None for no verbosity)"""
         self._model = k.models.load_model(model_filename)
+        self._verbosity = verbose_period or float("inf")
+        self._count = 0
+
 
     def _direction_prediction(self, board, direction):
         for _ in range(direction):
@@ -22,7 +28,8 @@ class ModelStrategy(Strategy):
                                                (1, WIDTH * HEIGHT, MAX_TILE))
         return self._model.predict(example_as_single_example)
 
-    def get_move(self, board, score):
+    def get_move(self, board, _):
+        self._count += 1
         best_dir = None
         best_score = float('-inf')
         for direction in DIRECTIONS:
@@ -30,4 +37,10 @@ class ModelStrategy(Strategy):
             if score > best_score:
                 best_score = score
                 best_dir = direction
+        if self._count >= self._verbosity:
+            print("Considering board:")
+            board.pretty_print()
+            print("the model chooses move", PRETTY_DIRECTION[best_dir],
+                  "with score", best_score)
+            self._count = 0
         return best_dir

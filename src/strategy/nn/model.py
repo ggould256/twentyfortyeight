@@ -5,9 +5,8 @@ import sys
 import keras as k
 import numpy as np
 
-from game.board import Board
 from game.common import *
-from strategy.nn.data import Dataset, EXAMPLE_WIDTH, MAX_TILE
+from strategy.nn.data import Dataset, EXAMPLE_WIDTH, MAX_TILE, vector_as_board
 
 
 HPARAMS = {"conv_channels": 30,
@@ -99,18 +98,14 @@ def train_model(model, x, y, model_filename, num_epochs):
 def show_exemplar(model, x, x_as_onehot, y):
     """Picks a random example from the data."""
     i = np.random.randint(0, x.shape[0])
-    example = x[i,:]
+    example = x[i, :]
     example_as_onehot = x_as_onehot[i]
     score = y[i]
     example_as_single_example = np.reshape(example_as_onehot,
                                            (1, WIDTH * HEIGHT, MAX_TILE))
     prediction = model.predict(example_as_single_example)
 
-    # Encoding this back into a board requires some reformatting.
-    tile_values = [0 if int(tile) == 0 else int(2 ** tile) for tile in example]
-    board = Board([[tile_values[col * 4 + row] for col in range(4)]
-                   for row in range(4)])
-
+    board = vector_as_board(example)
     board.pretty_print()
     print("Actual score: %d; predicted score: %s" % (score, prediction))
 
@@ -135,6 +130,7 @@ def main(argv):
         train_model(model, x_as_onehot, y, args.model_file, args.epochs)
     for i in range(5):
         show_exemplar(model, x, x_as_onehot, y)
+
 
 if __name__ == '__main__':
     main(sys.argv)

@@ -11,6 +11,7 @@ import sys
 import numpy as np
 
 from game.common import *
+from game.board import Board
 from game.game import Game
 
 ENCODING_WIDTH = 1
@@ -31,6 +32,14 @@ def board_as_vector(board):
     return result
 
 
+def vector_as_board(vector):
+    # Encoding this back into a board requires some reformatting.
+    tile_values = [0 if int(tile) == 0 else int(2 ** tile) for tile in vector]
+    board = Board([[tile_values[col * 4 + row] for col in range(4)]
+                   for row in range(4)])
+    return board
+
+
 class Dataset(object):
     """A set of training data (held as matrices whose rows are examples) and a
     column vector of the example scores.."""
@@ -41,15 +50,17 @@ class Dataset(object):
         self._example_batches = [np.zeros((0, EXAMPLE_WIDTH))]
         self._score_batches = [np.zeros((0, 1))]
 
-    def add_game(self, player_strategy, rnd):
+    def add_game(self, player_strategy, rnd, starting_game_position=None):
         """Runs a game with the given strategy and randomness source, then
         enrolls the outcome in the dataset.
+
+        If @p starting_position is a Game object, start from that position.
 
         Returns the number of examples (moves) added.
         """
         states = np.zeros((1, EXAMPLE_WIDTH))
         num_moves = 0
-        game = Game(rnd=rnd)
+        game = starting_game_position or Game(rnd=rnd)
         running = True
         while running:
             intermediate_board, turn_outcome = (
@@ -85,13 +96,26 @@ class Dataset(object):
         del end_board, end_score
         return np.array(list(range(len(states), 0, -1)))
 
-    def add_n_examples(self, strategy, rnd, n):
+    def add_n_examples(self, strategy, rnd, n,
+                       starting_positions_dataset=None):
         """Runs games and adds them to the dataset until at least @p n
-        examples have been added.  Returns the number of examples added."""
+        examples have been added.  Returns the number of examples added.
+
+        If @p starting_positions_dataset is set, games will be started from
+        a randomly selected position from that dataset rather than from a
+        blank board."""
         print("Adding", n, "examples to dataset.")
         added = 0
         while added < n:
-            num_added = self.add_game(strategy, rnd)
+            starting_game = None
+            if starting_positions_dataset:
+                random_position = starting_positions_dataset.nth_example(
+                    rnd.randint(0,
+                                starting_positions_dataset.num_examples() - 1))
+                starting_game = Game(vector_as_board(random_position))
+                if not starting_game.board().can_move():
+                    continue
+            num_added = self.add_game(strategy, rnd, starting_game)
             if (added // 10000) != ((num_added + added) // 10000):
                 print("Added %d so far..." % (num_added + added))
             added += num_added
@@ -173,6 +197,14 @@ def main(argv):
     parser.add_argument('--strategy', metavar='FILE_OR_NAME', type=str,
                         help="name of strategy or filename of model",
                         default="random")
+    parser.add_argument('--starting_positions', metavar='FILENAME', type=str,
+                        default=None,
+                        help=("If set, start some or all games from positions"
+                              "drawn from this dataset"))
+    parser.add_argument('--new_start_fraction', metavar='FRACTION', type=float,
+                        default=1.,
+                        help=("If --starting_positions is set, start this "
+                              "fraction of games from a new game position"))
     args = parser.parse_args(argv[1:])
 
     import random
@@ -186,13 +218,20 @@ def main(argv):
     else:
         strategy = ModelStrategy(args.strategy)
 
+    start_positions_dataset = None
+    if args.starting_positions:
+        start_positions_dataset = Dataset.load(args.starting_positions)
+
     dataset = Dataset()
-    num_added = dataset.add_n_examples(strategy, random, args.num_examples)
+    num_added = dataset.add_n_examples(
+        strategy, random, args.num_examples * args.new_start_fraction)
+    if args.new_start_fraction < 1:
+        assert start_positions_dataset, \
+               "--new_start_fraction requires --starting_positions"
+        num_added = dataset.add_n_examples(
+            strategy, random, args.num_examples * (1 - args.new_start_fraction),
+            starting_positions_dataset=start_positions_dataset)
     print("Added", num_added, "examples")
-    for index in range(dataset.num_batches()):
-        print("X shape is %s, Y shape is %s" %
-              (dataset.example_batches()[index].shape,
-               dataset.score_batches()[index].shape))
     print("saving...")
     dataset.save(args.output_file)
     print("...saved.")

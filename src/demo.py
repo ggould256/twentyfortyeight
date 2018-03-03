@@ -29,7 +29,7 @@ if __name__ == '__main__':
         strategy = RandomStrategy()
     else:
         from strategy.nn.nn_strategy import ModelStrategy
-        strategy = ModelStrategy(args.strategy)
+        strategy = ModelStrategy(args.strategy, verbose_period=5000)
 
     total = 0
     for i in range(args.number_of_games):
@@ -45,6 +45,8 @@ if __name__ == '__main__':
         if not args.summary:
             print(game.score())
         total += game.score()
+        if not (i % 25):
+            print("...", i, "/", args.number_of_games)
     if args.summary:
         print("Strategy %s had average score %f after %d games" %
               (args.strategy,
