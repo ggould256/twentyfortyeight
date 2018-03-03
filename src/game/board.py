@@ -1,6 +1,15 @@
 import copy
 
+import numpy as np
+
 from game.common import *
+
+
+ENCODING_WIDTH = 1
+EXAMPLE_WIDTH = ENCODING_WIDTH * WIDTH * HEIGHT
+MAX_TILE = 15
+ENCODING = {**{0: np.array([[0]])},
+            **{2 ** n: np.array([[n]]) for n in range(1, MAX_TILE)}}
 
 
 class Board(object):
@@ -131,3 +140,29 @@ class Board(object):
                 if row[i] == row[i + 1]:
                     return True
         return False
+
+    # Methods for serializing boards to and from numpy vectors, for storage
+    # and use as neural network inputs.
+
+    @staticmethod
+    def vector_width():
+        return ENCODING_WIDTH * WIDTH * HEIGHT
+
+    def as_vector(self):
+        """@return the contents of the given board as a row vector."""
+        result = np.zeros((1, 0))
+        for column in self.columns():
+            for cell in column:
+                result = np.append(result, ENCODING[cell], axis=1)
+        assert (result.shape == (1, Board.vector_width()))
+        return result
+
+    @staticmethod
+    def from_vector(vec):
+        # Encoding this back into a board requires some reformatting.
+        tile_values = [0 if int(tile) == 0 else int(2 ** tile)
+                       for tile in vec.flatten()]
+        board = Board([[tile_values[col * HEIGHT + row]
+                        for row in range(HEIGHT)]
+                       for col in range(WIDTH)])
+        return board

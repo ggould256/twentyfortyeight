@@ -7,9 +7,18 @@ from game.common import *
 class TestBoard(unittest.TestCase):
 
     def setUp(self):
+        # A board that's easy to read for debugging purposes but does
+        # not have real tiles and so will fail smash/encode operations.
         self.readable_board = Board(
             [["00", "01", "02", "03"], ["10", "11", "12", "13"],
              ["20", "21", "22", "23"], ["30", "31", "32", "33"]])
+        # A board that occurred in real play.
+        self.realistic_board = Board(
+            [[   2, 128,   8,   8],
+             [   8,   8,  16,   0],
+             [   4,  32,   4,   0],
+             [   2,   4,   0,   0]])
+
 
     def test_smoke(self):
         board = Board()
@@ -119,13 +128,21 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(smashed, Board().update([1, 0], 2))
         # Locked board does not move.
         board = Board([[1, 2, 1, 2], [2, 1, 2, 1],
-                       [1, 2, 1, 2], [2, 1, 2, 1],])
+                       [1, 2, 1, 2], [2, 1, 2, 1]])
         self.assertFalse(board.can_move())
         changed, score, smashed = board.smash_up()
         self.assertFalse(changed)
         self.assertEqual(score, 0)
         self.assertEqual(smashed, board)
         self.assertIsNot(smashed, board)
+
+    def test_encoding(self):
+        board = self.realistic_board
+        encoding = board.as_vector()
+        self.assertEqual(encoding.size, Board.vector_width())
+        decoding = Board.from_vector(encoding)
+        self.assertEqual(board, decoding)
+
 
 if __name__ == '__main__':
     unittest.main()

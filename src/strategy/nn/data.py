@@ -14,31 +14,8 @@ from game.common import *
 from game.board import Board
 from game.game import Game
 
-ENCODING_WIDTH = 1
+EXAMPLE_WIDTH = Board.vector_width()
 MAX_BATCH_SIZE = 4096  # numpy arrays get slow to update beyond this size.
-EXAMPLE_WIDTH = ENCODING_WIDTH * WIDTH * HEIGHT
-MAX_TILE = 15
-ENCODING = {**{0: np.array([[0]])},
-            **{2 ** n: np.array([[n]]) for n in range(1, MAX_TILE)}}
-
-
-def board_as_vector(board):
-    """@return the contents of the given board as a row vector."""
-    result = np.zeros((1, 0))
-    for column in board.columns():
-        for cell in column:
-            result = np.append(result, ENCODING[cell], axis=1)
-    assert (result.shape == (1, EXAMPLE_WIDTH))
-    return result
-
-
-def vector_as_board(vector):
-    # Encoding this back into a board requires some reformatting.
-    tile_values = [0 if int(tile) == 0 else int(2 ** tile) for tile in vector]
-    board = Board([[tile_values[col * 4 + row] for col in range(4)]
-                   for row in range(4)])
-    return board
-
 
 class Dataset(object):
     """A set of training data (held as matrices whose rows are examples) and a
@@ -70,7 +47,7 @@ class Dataset(object):
             num_moves += (turn_outcome != ILLEGAL)
             if turn_outcome == OK:
                 states = np.append(states,
-                                   board_as_vector(intermediate_board),
+                                   Board.as_vector(intermediate_board),
                                    axis=0)
                 self._num_examples += 1
         player_strategy.notify_outcome(game.board(), game.score())
@@ -112,7 +89,7 @@ class Dataset(object):
                 random_position = starting_positions_dataset.nth_example(
                     rnd.randint(0,
                                 starting_positions_dataset.num_examples() - 1))
-                starting_game = Game(vector_as_board(random_position))
+                starting_game = Game(Board.from_vector(random_position))
                 if not starting_game.board().can_move():
                     continue
             num_added = self.add_game(strategy, rnd, starting_game)
