@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 
-from game.common import *
+from .common import WIDTH, HEIGHT, list_zip, PRETTY_PRINT
 
 
 ENCODING_WIDTH = 1

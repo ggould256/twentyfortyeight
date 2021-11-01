@@ -3,7 +3,7 @@
 """A mechanism for evaluating a strategy and giving it an abstract "score"
 representing how good it is at 2048 without excessive computation."""
 
-from rules import Game
+from game import Game
 
 
 class StrategyEvaluator(object):

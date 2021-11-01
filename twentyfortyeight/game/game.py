@@ -3,8 +3,9 @@
 import copy
 import random
 
-from game.board import Board
-from game.common import *
+from .board import Board
+from .common import (STARTING_TILES, HEIGHT, WIDTH,
+                     TILE_FREQ, OK, GAMEOVER, ILLEGAL)
 
 
 class Game(object):

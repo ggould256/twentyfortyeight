@@ -1,8 +1,7 @@
 import random
 
-from game.common import *
-from game.game import Game
-from strategy.strategy import Strategy
+from twentyfortyeight.game.common import DIRECTIONS
+from .strategy import Strategy
 
 class RandomStrategy(Strategy):
     def __init__(self, rnd=None):

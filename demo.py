@@ -2,9 +2,10 @@
 
 import argparse
 
-from game.common import *
-from game.game import Game
-from strategy.basic import SpinnyStrategy, RandomStrategy
+from twentyfortyeight import game
+from twentyfortyeight.game.common import GAMEOVER
+from twentyfortyeight.game.game import Game
+from twentyfortyeight.strategy.basic import SpinnyStrategy, RandomStrategy
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
